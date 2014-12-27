@@ -6,13 +6,13 @@ from newspaper.items import Article
 
 
 class RbcSpider(CrawlSpider):
-    name = 'rbc'
+    name = 'rbc1'
     allowed_domains = ['rbcdaily.ru']
     start_urls = [
         'http://rbcdaily.ru'
     ]
     rules = (
-        Rule(LinkExtractor(allow='/2014/11/2[0-9]'), callback='parse_link',
+        Rule(LinkExtractor(allow='/2014/1[1-2]/2[0-9]'), callback='parse_link',
              follow=True),  # should extract Nov 20-29
     )
 
