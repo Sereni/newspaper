@@ -21,13 +21,13 @@ import re
 class TestSpider(CrawlSpider):
 
     dir = ''
-    prefix = 'newspaper/downloads/'
+    prefix = os.path.join('newspaper', 'downloads')
     start_urls = []
 
     def parse_link(self, response):
 
-        self.dir = self.prefix + self.name
-        path = self.dir + '/' + response.url.strip('/').split('/')[-1]
+        self.dir = os.path.join(self.prefix, self.name)
+        path = os.path.join(self.dir, response.url.strip('/').split('/')[-1])
 
         if not os.path.exists(self.dir):
             try:
