@@ -20,7 +20,7 @@ COOKIES_ENABLED = False
 # CLOSESPIDER_PAGECOUNT = 42
 
 # this setting is for quick tests
-CLOSESPIDER_PAGECOUNT = 5
+CLOSESPIDER_PAGECOUNT = 2
 
 # this helps against 503s on some sites
 DOWNLOAD_DELAY = 1

@@ -1,3 +1,4 @@
+# coding=utf-8
 __author__ = 'Sereni'
 """
 This module downloads a sample html corpus.
@@ -9,19 +10,21 @@ from the name variable in each class.
 
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
-from scrapy.exceptions import CloseSpider
-
 from collections import Counter
 
 import os
 import errno
 import re
 
+from newspaper.utils.parser import find_text
+
+
+# fixme kp often finds author pages
 
 class TestSpider(CrawlSpider):
 
     dir = ''
-    prefix = os.path.join('newspaper', 'downloads')
+    prefix = os.path.join('newspaper', 'downloads', 'learn')
     start_urls = []
 
     def parse_link(self, response):
@@ -36,8 +39,10 @@ class TestSpider(CrawlSpider):
                 if exception.errno != errno.EEXIST:
                     raise
 
-        with open(path, 'w') as f:
-            f.write(response.body)
+        # with open(path, 'w') as f:
+        #     f.write(response.body)
+        print response.url
+        print find_text(response)
 
     def update_rules(self, links):
 
@@ -143,3 +148,5 @@ class KpSpider(TestSpider):
     name = 'kp'
     allowed_domains = ['kp.ru']
     start_urls = ['http://kp.ru']
+
+xpaths = []
