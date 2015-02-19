@@ -38,7 +38,7 @@ class TextPipeline(object):
             best = texts.pop()
 
             # discard things we've already seen somewhere else
-            if self.seen[best] > 1:
+            if self.seen[best] > 3:
                 continue
 
             # if it's good, write to xpaths and quit
