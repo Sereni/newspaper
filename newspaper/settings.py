@@ -16,6 +16,10 @@ NEWSPIDER_MODULE = 'newspaper.spiders'
 LOG_LEVEL = 'INFO'
 COOKIES_ENABLED = False
 
+ITEM_PIPELINES = {
+    'newspaper.pipelines.TextPipeline': 10,
+}
+
 # this will result in approx 50 pages, since crawls are async and do not stop immediately
 # CLOSESPIDER_PAGECOUNT = 42
 

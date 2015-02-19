@@ -17,3 +17,9 @@ class Article(scrapy.Item):
     # text = scrapy.Field()
     # author = scrapy.Field()
     # date = scrapy.Field()
+
+
+class Response(scrapy.Item):
+
+    response = scrapy.Field()  # that's the whole response object, yeah, I know
+    url = scrapy.Field()

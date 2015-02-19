@@ -11,6 +11,7 @@ from the name variable in each class.
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from collections import Counter
+from newspaper.items import Response
 
 import os
 import errno
@@ -29,20 +30,27 @@ class TestSpider(CrawlSpider):
 
     def parse_link(self, response):
 
-        self.dir = os.path.join(self.prefix, self.name)
-        path = os.path.join(self.dir, response.url.strip('/').split('/')[-1])
+        item = Response()
+        item['response'] = response
+        item['url'] = response.url
 
-        if not os.path.exists(self.dir):
-            try:
-                os.makedirs(self.dir)
-            except OSError as exception:
-                if exception.errno != errno.EEXIST:
-                    raise
+        return item
 
+        # ~~~~~ one-level text find -- make changes in parser.py and settings.py
+        # print find_text(response)
+
+        # ~~~~~ old file-writing branch
+        # self.dir = os.path.join(self.prefix, self.name)
+        # path = os.path.join(self.dir, response.url.strip('/').split('/')[-1])
+        #
+        # if not os.path.exists(self.dir):
+        #     try:
+        #         os.makedirs(self.dir)
+        #     except OSError as exception:
+        #         if exception.errno != errno.EEXIST:
+        #             raise
         # with open(path, 'w') as f:
         #     f.write(response.body)
-        print response.url
-        print find_text(response)
 
     def update_rules(self, links):
 

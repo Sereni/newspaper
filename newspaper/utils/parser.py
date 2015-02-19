@@ -73,10 +73,10 @@ def get_common_path(node):
     pass
 
 
-def sibling_text_len(node):
+def sibling_text(node):
     """
     Select the given node and all its siblings that have the same tag
-    Return the total length of their text split by spaces
+    Return their joint text
     """
     # get current node name
     node_name = node.xpath('name(.)').extract()[0]
@@ -84,16 +84,7 @@ def sibling_text_len(node):
     # select all nodes of node's parent that are the same tag as node
     # get their text, join it with spaces
     text = ' '.join([n.extract() for n in node.xpath('./../*[self::{0}]/text()'.format(node_name))])
-    return len(text.split(' '))
-
-
-def expand(node):
-    # смотреть, есть ли у узла descendants из разрешённых тегов, у которых нет больше детей
-    # если да, то их текст присобачить к тексту узла
-    # из-за этого в дивах высокого уровня появится мусор: вот у тебя есть див, а где-то дофига внизу есть
-    # маленький текстик в em, и он прибавится
-    # надежда на то, что у высокого дива самого по себе нет текста, и тогда наверх всплывут только параграфы
-    pass
+    return text
 
 
 def find_text(article):
@@ -106,10 +97,23 @@ def find_text(article):
     # split by whitespace: crude, sufficient.
     # longest = sorted(nodes, key=lambda x: len(x.xpath('./text()').extract()[0].split(' '))).pop()
 
-    # for each node, assign a joint sibling text length, sort the nodes by this number, return the biggest
-    longest = sorted(nodes, key=lambda x: sibling_text_len(x)).pop()
+    # ~~~~~ the old individual version starts here
 
-    return get_path(longest.xpath('./..'))
+    # # for each node, assign a joint sibling text length, sort the nodes by this number, return the biggest
+    # longest = sorted(nodes, key=lambda x: len(sibling_text(x).split(' '))).pop()
+    #
+    # return get_path(longest.xpath('./..'))
+
+    # ~~~~~ the pipeline version starts here
+
+    # for each node, record its sibling text and node xpath, sort by joint text length
+    texts = sorted(list(set([(sibling_text(node), get_path(node.xpath('./..'))) for node in nodes])),
+                   key=lambda x: len(x[0].split(' ')))
+    # ok, I'm making it a set to remove duplicates on one page, and then back to list to sort it
+    # for instance, the article is stored as many times as there are paragraphs in it, see how sibling-text works
+    # this is real important for the pipeline to work, please don't remove
+
+    return texts
 
 
 def find_title(article):
@@ -122,6 +126,3 @@ def find_date(article):
 
 def find_author(article):
     pass
-
-# rbc, sovsport and izvestia work like a charm
-# fixme ria возвращает правила комментирования -- смешно конечно, но неполезно
