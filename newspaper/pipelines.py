@@ -19,7 +19,6 @@ import errno
 # fieldname is the name of field in the Article item (text, author, date, title)
 # \n at the end has to be there. please.
 
-
 class NewspaperPipeline(object):
     def process_item(self, item, spider):
         return item
@@ -64,9 +63,10 @@ class WritePipeline(object):
             self.count += count
             item['wordcount'] = count
 
-            if self.count > spider.limit:
-                raise CloseSpider("Word limit reached")  # this may need to be called inside a spider
-                                                         # also, it won't work immediately, I wonder how slow
+            # # doesn't work. leaving for now
+            # if self.count > spider.limit:
+            #     raise CloseSpider("Word limit reached")  # this may need to be called inside a spider
+            #                                              # also, it won't work immediately, I wonder how slow
 
             with open(path, 'w') as f:
                 self.write_item(f, item)
@@ -86,7 +86,7 @@ class WritePipeline(object):
         f.write('<TITLE>{0}</TITLE>\n'.format(item['title']))
         f.write('<WORDCOUNT>{0}</WORDCOUNT>\n'.format(item['wordcount']))
         f.write('</METATEXT>\n')
-        f.write('<TEXT>{0}</TEXT>'.format(item['text']))
+        f.write('<TEXT>{0}</TEXT>'.format(item['text'].encode('utf-8')))
         f.write(postfix)
         f.close()
 
@@ -100,7 +100,6 @@ class TextPipeline(object):
         self.xpaths = Counter()  # now, how do I return the best guess from here when the pipeline closes?
 
     def process_item(self, item, spider):
-
 
         # find texts in the response
         texts = find_text(item['response'])

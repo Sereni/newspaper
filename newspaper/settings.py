@@ -15,7 +15,8 @@ SPIDER_MODULES = ['newspaper.spiders']
 NEWSPIDER_MODULE = 'newspaper.spiders'
 
 # todo shut scrapy up in production, provide short progress messages
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = 'ERROR'
+# LOG_FORMATTER = 'newspaper.spiders.PoliteLogFormatter'
 COOKIES_ENABLED = False
 
 # writepipeline *must* be the first
