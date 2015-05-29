@@ -8,23 +8,27 @@
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
 
+
 BOT_NAME = 'newspaper'
 
 SPIDER_MODULES = ['newspaper.spiders']
 NEWSPIDER_MODULE = 'newspaper.spiders'
 
+# todo shut scrapy up in production, provide short progress messages
 LOG_LEVEL = 'INFO'
 COOKIES_ENABLED = False
 
+# writepipeline *must* be the first
 ITEM_PIPELINES = {
-    'newspaper.pipelines.TextPipeline': 10,
+    'newspaper.pipelines.WritePipeline': 100,
+    'newspaper.pipelines.TextPipeline': 200,
 }
 
 # this will result in approx 50 pages, since crawls are async and do not stop immediately
 # CLOSESPIDER_PAGECOUNT = 42
 
 # this setting is for quick tests
-CLOSESPIDER_PAGECOUNT = 2
+# CLOSESPIDER_PAGECOUNT = 2
 
 # this helps against 503s on some sites
 DOWNLOAD_DELAY = 1

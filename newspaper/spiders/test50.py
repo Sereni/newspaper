@@ -11,28 +11,65 @@ from the name variable in each class.
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
 from collections import Counter
-from newspaper.items import Response
+from newspaper.items import Response, Article
+import newspaper.utils.extract as extract
 
 import os
-import errno
 import re
 
-from newspaper.utils.parser import find_text
+# todo maybe replace all spiders with one and just provide a start url as an arg
 
-
-# fixme kp often finds author pages
 
 class TestSpider(CrawlSpider):
 
-    dir = ''
-    prefix = os.path.join('newspaper', 'downloads', 'learn')
+    # I sort of hope that the args are going to magically appear here, and that this is the way to call them...
+    def __init__(self, text=None, author=None, title=None, date=None, first=False, wordcount=10000, *args, **kwargs):
+
+        super(TestSpider, self).__init__()
+
+        # this is supposed to store xpaths
+        self.text = text
+        self.author = author
+        self.title = title
+        self.date = date
+
+        # this indicates the first run
+        self.first = first
+
+        # set word limit for a download job
+        self.limit = wordcount
+
+    # dir = ''
+    # prefix = os.path.join('newspaper', 'downloads', 'learn')
+    names = {
+        'kp': 'Комсомольская правда',
+        'rbc': 'РБК',
+        'sovsport': 'Советский Спорт',  # ооох энкоды полетят
+        'ria': 'РИА',
+        'izvestia': 'Известия'
+    }
     start_urls = []
 
     def parse_link(self, response):
 
-        item = Response()
-        item['response'] = response
-        item['url'] = response.url
+        if self.first:
+            item = Response()
+            item['response'] = response
+            item['url'] = response.url
+        else:
+            item = Article()
+            item['url'] = response.url
+            item['source'] = self.names[self.name]
+
+            # call xpaths one by one and extract data
+            # todo add more fields after writing parsers
+            if self.text:
+                item['text'] = extract.text(response, self.text)
+
+            # you think they'd be empty by default, but no
+            item['date'] = ''
+            item['author'] = ''
+            item['title'] = ''
 
         return item
 
@@ -158,3 +195,5 @@ class KpSpider(TestSpider):
     start_urls = ['http://kp.ru']
 
 xpaths = []
+
+# todo add new spider: http://newdaynews.ru/
