@@ -58,6 +58,8 @@ class WritePipeline(object):
 
             path = os.path.join(self.dir, item['url'].strip('/').split('/')[-1])
 
+            print
+
             # count words in article, save to item['wordcount']
             count = wordcount(item['text'])
             self.count += count
@@ -126,4 +128,5 @@ class TextPipeline(object):
 
     # this outputs the pipeline results
     def close_spider(self, spider):
-        sys.stdout.write('text=' + str(self.xpaths.most_common(1)[0][0]) + '\n')
+        sys.stdout.write('text=' + str('\'' + self.xpaths.most_common(1)[0][0]) + '\'\n')
+        # fixme the above fails with an index error

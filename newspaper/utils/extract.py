@@ -1,5 +1,6 @@
 __author__ = 'Sereni'
 
+import re
 
 def text(response, xpath):
     """
@@ -16,8 +17,15 @@ def text(response, xpath):
         name = node.xpath('name(.)').extract()[0]
         if name == 'p' or name == 'div':
 # fixme all p's are squished into one, should be more
+# testing: if I leave out a \r\n, do the line breaks change in the file? is this the place to insert the tag?
+# if yes, why the heck is there just one tag and so many line breaks in between?
+# might as well just replace two consecutive line breaks with one line break and a </p><p> when text is assembled.
             # get text of node and its descendants, write between <p>s and append to text
-            article_text = article_text + u'<p>{0}</p>\r\n'.format(' '.join(node.xpath("string(.)").extract()))
+            # print ' '.join(node.xpath("string(.)").extract()).replace('\r', '~~~~').replace('\n', '~~~~')
+            text = re.sub('(\n)+', '</p><p>', ' '.join(node.xpath("string(.)").extract()))
+            # article_text = article_text + u'<p>{0}</p>\r\n'.format \
+            #     (' '.join(node.xpath("string(.)").extract()).replace('\n', '</p><p>'))
+            article_text = article_text + u'<p>{0}</p>\r\n'.format(text)
 
     return article_text
 
