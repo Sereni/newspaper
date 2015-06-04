@@ -6,7 +6,6 @@ def text(response, xpath):
     """
     Given a response and an xpath, get text inside xpath separated with <p> tags
     """
-
     article_text = ''
 
     # get everything inside xpath tag
