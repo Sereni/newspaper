@@ -8,6 +8,10 @@ import warnings
 import time
 from subprocess import Popen, PIPE
 
+
+class NoPathsException(Exception):
+    pass
+
 # set pagecount for test corpus
 pagecount = ['-s', 'CLOSESPIDER_PAGECOUNT=2']
 
@@ -37,29 +41,28 @@ except IndexError:
 # ... but that's for testing...
 # todo catch exception for unresolved server
 #  ERROR: Error downloading <GET http://izvestia.ru>: DNS lookup failed: address 'izvestia.ru' not found: [Errno 8] nodename nor servname provided, or not known.
-# todo subprocess shell True for windows -- find a better way or implement
-# launch the test corpus crawl
-# proc = Popen(["scrapy", "crawl", "-a", "first=True"] + [name] + pagecount, stdout=PIPE)
-proc = Popen(' '.join(["scrapy", "crawl", "-a", "first=True"] + [name] + pagecount), stdout=PIPE, shell=True)
 
+
+# launch the test corpus crawl
+proc = Popen(["scrapy", "crawl", "-a", "first=True"] + [name] + pagecount, stdout=PIPE)
 
 # read stdout
 out = proc.communicate()
 
+# fixme this might need an -a before each xpath
 # write down xpaths
 xpaths = [i for i in out[0].split('\n') if i]
-# xpaths = [i.replace('"', '\"') for i in out[0].split('\n') if i]
 
+if not xpaths:
+    raise NoPathsException("No xpaths found from test corpus. Are you connected to the internet?")
 
-spider_args = ['-a', wordcount, '-a'] + xpaths  # it's a one-string list
+spider_args = ["-a", wordcount, "-a"] + xpaths  # it's a one-string list
 
 # launch the crawl again with these args
 main_crawl = Popen(["scrapy", "crawl"] + spider_args + [name])
-# args = " ".join(['scrapy', 'crawl'] + spider_args + [name])
-# main_crawl = Popen(args, shell=True)
 
 # sit here, count the seconds, kill the process after a (little) while
-time.sleep(3)
+time.sleep(30)
 # start = time.clock()
 # while time.clock() - start < 300:
 #     # interesting, if I put sleep here, does it pause the subprocess? I guess not.

@@ -7,11 +7,14 @@ def text(response, xpath):
     Given a response and an xpath, get text inside xpath separated with <p> tags
     """
     article_text = u''
+    print xpath
 
     # get everything inside xpath tag
     nodes = response.xpath(xpath)
 
     for node in nodes:
+        stuff = node.xpath('name(.)').extract()
+        print stuff
 
         # get node tag to filter randomness. hm, this might break
         name = node.xpath('name(.)').extract()[0]
