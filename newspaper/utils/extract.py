@@ -41,7 +41,8 @@ def year_month(s):
     """
     Given item's date in some fixed format, return year and month to use in folder names
     """
-    pass
+    day, month, year = s.split('.')
+    return year, month
 
 # input: path to file, output: date
 # use in the main pipeline at each file

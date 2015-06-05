@@ -45,18 +45,19 @@ class WritePipeline(object):
             # create directory. it's a shame I do it every time, but self.name just won't go on __init__
             prefix = os.path.join('downloads')
             self.dir = os.path.join(prefix, self.name)  # breaks here, no?
+            year, month = extract.year_month(item['date'])
+            subdir = os.path.join(self.dir, year, month)
 
-            if not os.path.exists(self.dir):
+            if not os.path.exists(subdir):
                 try:
-                    os.makedirs(self.dir)
+                    os.makedirs(subdir)
                 except OSError as exception:
                     if exception.errno != errno.EEXIST:
                         raise
 
             # todo create directory based on year and month. include subdir below into path. add existence check
-            # subdir = os.path.join(extract.year_month(item['date']))
 
-            path = os.path.join(self.dir, item['url'].strip('/').split('/')[-1])
+            path = os.path.join(subdir, item['url'].strip('/').split('/')[-1])
 
             # count words in article, save to item['wordcount']
             count = wordcount(item['text'])
