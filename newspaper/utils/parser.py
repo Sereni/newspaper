@@ -1,6 +1,6 @@
 # coding=utf-8
 __author__ = 'Sereni'
-
+from lxml import etree
 
 def cyr(s):
     """Checks if a string has at least one cyrillic char"""
@@ -116,6 +116,39 @@ def find_text(article):
     return texts
 
 
+def capitalized(s):
+    """
+    Check if a string starts with a capital letter
+    """
+    if s[0].lower() == s[0]:
+        return False
+    return True
+
+
+def find_author(article):
+    # select nodes the attributes of which have 'author' in them
+    # check their text value: the first two words should be capitalized
+
+    authors = []
+    root = etree.XML(article.body.decode('utf-8'), etree.HTMLParser())
+    for e in root.iter():
+        for a in e.attrib:
+            if 'author' in e.attrib[a]:
+                if e.text:
+                    words = e.text.split()
+                    if len(words) > 1 and capitalized(words[0]) and capitalized(words[1]):
+                        authors.append(' '.join(words))
+
+    # nothing works, so meh, let's use lxml
+    # nodes = [n.extract() for n in article.xpath('//*/@*[contains(name(), "author")]/..')]
+    #          # if len(n.extract().split(' ')) > 1
+    #          # and capitalized(n.extract().split(' ')[0])
+    #          # and capitalized(n.extract().split(' ')[1])]
+
+    return authors
+
+
+# these two are implemented for each individual response in extract.py
 def find_title(article):
     pass
 
@@ -124,5 +157,3 @@ def find_date(article):
     pass
 
 
-def find_author(article):
-    pass

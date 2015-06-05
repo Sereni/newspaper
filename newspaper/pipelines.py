@@ -6,7 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 from collections import Counter
-from newspaper.utils.parser import find_text
+from newspaper.utils.parser import find_text, find_author
 from scrapy.exceptions import DropItem, CloseSpider
 import newspaper.utils.extract as extract
 from newspaper.utils.shelari.tokenizator import wordcount
@@ -75,8 +75,6 @@ class WritePipeline(object):
 
     def write_item(self, f, item):
 
-        # I kind of need to use a valid xml constructor
-        # but I'm a lazy donkey.
         prefix = '<?xml version="1.0" encoding="utf-8"?>\n<DOCUMENT>\n<METATEXT>\n'
         postfix = '</DOCUMENT>'
         f.write(prefix)
@@ -84,7 +82,7 @@ class WritePipeline(object):
         f.write('<SOURCE>{0}</SOURCE>\n'.format(item['source']))
         f.write('<DATE>{0}</DATE>\n'.format(item['date']))
         f.write('<AUTHOR>{0}</AUTHOR>\n'.format(item['author']))
-        f.write('<TITLE>{0}</TITLE>\n'.format(item['title']))
+        f.write('<TITLE>{0}</TITLE>\n'.format(item['title'].encode('utf-8')))
         f.write('<WORDCOUNT>{0}</WORDCOUNT>\n'.format(item['wordcount']))
         f.write('</METATEXT>\n')
         f.write('<TEXT>{0}</TEXT>'.format(item['text'].encode('utf-8')))
@@ -92,18 +90,27 @@ class WritePipeline(object):
         f.close()
 
 
-class TextPipeline(object):
+class DetectionPipeline(object):
 
     def __init__(self):
 
         # this stores (text, xpath) found on each page
         self.seen = Counter()
-        self.xpaths = Counter()  # now, how do I return the best guess from here when the pipeline closes?
+        self.xpaths = Counter()
+
+        # store authors seen across many pages
+        # this will serve as a filter for sites like ria, where all authors are listed on every page
+        self.authors = Counter()
 
     def process_item(self, item, spider):
 
         # find texts in the response
         texts = find_text(item['response'])
+        authors = find_author(item['response'])
+
+# I want a cutoff, say, if over half the pages feature an author, it's a repeated entry
+        # well, a test set is about what, 20 pages? let's say over 10 mentions is bad
+        self.authors.update(authors)
 
         # remember texts and their xpaths
         self.seen.update(texts)
@@ -128,3 +135,4 @@ class TextPipeline(object):
     # this outputs the pipeline results
     def close_spider(self, spider):
         sys.stdout.write('text=' + str(self.xpaths.most_common(1)[0][0]) + '\n')
+        sys.stdout.write('authors=' + ';'.join([i for i, count in self.authors.iteritems()]))

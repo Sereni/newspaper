@@ -22,7 +22,7 @@ COOKIES_ENABLED = False
 # writepipeline *must* be the first
 ITEM_PIPELINES = {
     'newspaper.pipelines.WritePipeline': 100,
-    'newspaper.pipelines.TextPipeline': 200,
+    'newspaper.pipelines.DetectionPipeline': 200,
 }
 
 # this will result in approx 50 pages, since crawls are async and do not stop immediately

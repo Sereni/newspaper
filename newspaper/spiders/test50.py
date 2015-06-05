@@ -39,8 +39,6 @@ class TestSpider(CrawlSpider):
         # set word limit for a download job
         self.limit = wordcount
 
-    # dir = ''
-    # prefix = os.path.join('newspaper', 'downloads', 'learn')
     names = {
         'kp': 'Комсомольская правда',
         'rbc': 'РБК',
@@ -66,30 +64,13 @@ class TestSpider(CrawlSpider):
             if self.text:
                 item['text'] = extract.text(response, self.text)
 
-            if self.date:
-                item['date'] = extract.date(response)
+            item['date'] = extract.date(response)
+            item['title'] = extract.header(response)
 
             # you think they'd be empty by default, but no
             item['author'] = ''
-            item['title'] = ''
 
         return item
-
-        # ~~~~~ one-level text find -- make changes in parser.py and settings.py
-        # print find_text(response)
-
-        # ~~~~~ old file-writing branch
-        # self.dir = os.path.join(self.prefix, self.name)
-        # path = os.path.join(self.dir, response.url.strip('/').split('/')[-1])
-        #
-        # if not os.path.exists(self.dir):
-        #     try:
-        #         os.makedirs(self.dir)
-        #     except OSError as exception:
-        #         if exception.errno != errno.EEXIST:
-        #             raise
-        # with open(path, 'w') as f:
-        #     f.write(response.body)
 
     def update_rules(self, links):
 
@@ -190,7 +171,8 @@ class IzvestiaSpider(TestSpider):
     allowed_domains = ['izvestia.ru']
     start_urls = ['http://izvestia.ru']
 
-
+# fixme doesn't find any text or title in kp and records broken xml
+# fixme same shit with ria
 class KpSpider(TestSpider):
     name = 'kp'
     allowed_domains = ['kp.ru']

@@ -30,16 +30,16 @@ proc = Popen(["scrapy", "crawl", "-a", "first=True"] + [name] + pagecount, stdou
 out = proc.communicate()
 
 # write down xpaths
-xpaths = [i for i in out[0].split('\n') if i]
+params = [i for i in out[0].split('\n') if i]
 
 # catch a possible DNS lookup error (and all the other mysterious errors)
-if not xpaths:
+if not params:
     raise NoPathsException("No xpaths found from test corpus. Are you connected to the internet?")
 
-spider_args = ["-a"] + xpaths  # it's a one-string list
+spider_args = ["-a"] + [params[0]] + ["-a"] + [params[1]]  # it's a one-string list
 
 # launch the crawl again with these args
-main_crawl = Popen(["scrapy", "crawl", "-a", "date=1"] + spider_args + [name])
+main_crawl = Popen(["scrapy", "crawl"] + spider_args + [name])
 
 # sit here, count the seconds, kill the process after a (little) while
 time.sleep(5)
