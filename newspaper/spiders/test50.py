@@ -66,8 +66,10 @@ class TestSpider(CrawlSpider):
             if self.text:
                 item['text'] = extract.text(response, self.text)
 
+            if self.date:
+                item['date'] = extract.date(response)
+
             # you think they'd be empty by default, but no
-            item['date'] = ''
             item['author'] = ''
             item['title'] = ''
 
