@@ -25,7 +25,6 @@ def get_first(l):
 
 def is_script(s):
     """Determines if string is a script rather than natural text"""
-    # todo if forbidding scripts by tag won't do for some reason, write this out
     # no cyrillic text?
     # too much punctuation?
     pass
@@ -129,13 +128,17 @@ def find_author(article):
     # select nodes the attributes of which have 'author' in them
     # check their text value: the first two words should be capitalized
 
+    # ideas: check candidate position against article text xpath
+    # fixme this finds comment authors
+
     authors = []
     root = etree.XML(article.body.decode('utf-8'), etree.HTMLParser())
     for e in root.iter():
         for a in e.attrib:
             if 'author' in e.attrib[a]:
-                if e.text:
-                    words = e.text.split()
+                text = etree.tostring(e, method='text', encoding='unicode')
+                if text:
+                    words = text.split()
                     if len(words) > 1 and capitalized(words[0]) and capitalized(words[1]):
                         authors.append(' '.join(words))
 

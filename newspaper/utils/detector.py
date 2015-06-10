@@ -14,7 +14,6 @@ Kept for code snippets mostly, may be safely deleted
 # /done/ 1. sov, izv, rbc: найти длинный блок текста. в одном из предыдущих сиблингов искать <a> с 2+ словами (рекурсивно) href достать.
 # до этого сиблинга, бывает, надо подняться на 1-2 уровня
 # /done/ 2. если много текста в <a>, копируй href оттуда -- они продублированы
-# todo implement point 3
 # 3. Параллельно: бывают заголовки без превью. они в <a>, обычно . нужны ограничения на хреф: тот же домен
 # как быть с авторскими колонками и прочей дрянью?
 
@@ -56,11 +55,6 @@ def find_links(response):
     return links
 
 
-# todo and remember to restrict all the links to the same domain name.
-# todo tell relative links from absolutes
-
-
 def extrapolate(links):
-    # todo given a list of valid links, construct a regular expression describing them
     # not too general though
     pass

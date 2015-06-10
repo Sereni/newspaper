@@ -2,6 +2,9 @@
 
 import re
 from lxml import etree
+from collections import Counter
+from parser import find_author, capitalized
+import datetime
 import os
 import codecs
 
@@ -14,14 +17,20 @@ def text(response, xpath):
 
     # get everything inside xpath tag
     nodes = response.xpath(xpath)
+    print len(nodes)
 
     for node in nodes:
 
         # get node tag to filter randomness. hm, this might break
         name = node.xpath('name(.)').extract()[0]
+        text = '</p>\n<p>'.join(node.xpath("string(.)").extract())
+        # text = stringify_children(node)
         if name == 'div':
 
-            # get text of node and its descendants, write between <p>s and append to text
+            # fixme в известиях сейчас один жирный p
+            # fixme попадаются скрипты в теле статьи, радостно идут в "текст"
+
+            # # get text of node and its descendants, write between <p>s and append to text
             text = re.sub('(\n)+', '</p>\n<p>', ' '.join(node.xpath("string(.)").extract()))
             article_text = article_text + u'<p>{0}</p>\r\n'.format(text)
 
@@ -33,23 +42,37 @@ def text(response, xpath):
         # if the tags are p, sovsport inserts \n at every line break, and we end up with tons of fake <p>'s.
         # so don't replace line breaks in this case
         elif name == 'p':
-            article_text = article_text + u'{0}\r\n'.format(' '.join(node.xpath("string(.)").extract()))
-
+            article_text = article_text + u'{0}\r\n'.format(' '.join(text))
 
     return article_text
+
+def stringify_children(node):
+    from itertools import chain
+    parts = ([node.xpath('.').extract()] +
+            list(chain(*([etree.tostring(c, with_tail=False), c.tail] for c in node.getchildren()))) +
+            [node.tail])
+    # filter removes possible Nones in texts and tails
+    out = ''.join(filter(None, parts))
+    print out
+    return out
 
 
 def year_month(s):
     """
     Given item's date in some fixed format, return year and month to use in folder names
     """
-    day, month, year = s.split('.')
+    try:
+        day, month, year = s.split('.')
+    except ValueError:
+        print s
+        return '', ''
     return year, month
 
 # input: path to file, output: date
 # use in the main pipeline at each file
 
 # to convert date to the format d(d).mm.yy(yy)
+
 def convert_date(raw_date):
     # for replacing the words by numbers at the end
     months = {u'января': u'01', u'февраля': u'02', u'марта': u'03', u'апреля': u'04',
@@ -63,15 +86,13 @@ def convert_date(raw_date):
     for month in months:
         if month in raw_date:
             raw_date = raw_date.replace(month, months[month])
-            found_date = re.search(u'([0-9]{1,2}[.-/ ][0-9]{1,2}[.-/ ][0-9]{2,4}).*', raw_date)  # to delete time
+            found_date = re.search(u'([0-9]{1,2}[.-/ ][0-9]{1,2}[.-/ ][0-9]{2,4}).*', raw_date) # to delete time
             if found_date is not None:
                 raw_date = found_date.group(1)
-
     result_date = re.sub(u'[ /-]', u'.', raw_date)
     return result_date
 
 # article is a path to an *.html file
-# MODIFIED by K: article is a html response from scrapy
 def date(article):
     # main regex
     search_date = re.compile(u'([0-9]{1,2}[.-/ ]'
@@ -79,11 +100,7 @@ def date(article):
                              u'|[Яя]нваря|[Фф]евраля|[Мм]арта|[Аа]преля|[Мм]ая|[Ии]юня|'
                              u'[Ии]юля|[Аа]вгуста|[Сс]ентября|[Оо]ктября|[Нн]оября|[Дд]екабря)'
                              u'[.-/ ]20[0-9]{2,4}).*')
-    # f = codecs.open(article, 'r', 'utf-8')
-    # text = f.read()
-
-    text = article.body  # article is a Scrapy Response object
-
+    text = article.body
     # content -- every text in div
     content = []
     root = etree.XML(text, etree.HTMLParser())
@@ -106,6 +123,17 @@ def date(article):
                     raw_date = found_date.group(1)
                     result_date = convert_date(raw_date)
                     return result_date
+                else:
+                    if u'вчера' in d.text:
+                        today = datetime.date.today()
+                        yesterday = today - datetime.timedelta(days=1)
+                        result_date = str(yesterday.day) + '.' + str(yesterday.month) + '.' + str(yesterday.year)
+                        return result_date
+                    if u'сегодня' in d.text:
+                        today = datetime.date.today()
+                        result_date = str(today.day) + '.' + str(today.month) + '.' + str(today.year)
+                        return result_date
+
 
         # case for izvestia with 'date'
         if 'time' in d.attrib or 'date' in d.attrib:
@@ -165,6 +193,7 @@ def date(article):
     result_date = convert_date(raw_date)
     return result_date
 
+# for finding a header
 
 def lcs(a, b):
     lengths = [[0 for j in range(len(b)+1)] for i in range(len(a)+1)]
@@ -193,7 +222,6 @@ def lcs(a, b):
 
 
 def header(article):
-
     text = article.body
     root = etree.XML(text, etree.HTMLParser())
     raw_header = ''
@@ -203,18 +231,71 @@ def header(article):
         # case for sovsport, izvestia. rbc, ria, kp  ng;
         # meduza - name of newspaper is there
         # kommersant - the second entry is perfect, the first with name of the newspaper
-        if d.tag == 'meta':
-            for attr in d.attrib:
-                if 'title' in d.attrib[attr]:
-                    raw_header = d.attrib['content']
+        if d.tag == 'title':
+            raw_header = d.text
+            if raw_header[0] == ' ':
+                raw_header = raw_header.lstrip()
+            #print raw_header
         # search for lcs in the content to delete name of newspaper
-        if d.tag == 'div' or d.tag == 'h1' or d.tag == 'h2':  # maybe add some other tags for other newspapers
-            for child in d:
-                if child.text is not None:
-                    possible_lcs.append(lcs(child.text, raw_header))
+        part = raw_header[len(raw_header)/6:len(raw_header)/4]
+        if d.tag == 'h1' or d.tag == 'h2':
+            if d.text is not None:
+                if part in d.text:
+                    if part in lcs(d.text, raw_header):
+                        possible_lcs.append(lcs(d.text, raw_header))
+        if not possible_lcs:
+            if d.tag == 'div' or d.tag == 'span':
+                if d.text is not None:
+                    if part in d.text:
+                        if part in lcs(d.text, raw_header):
+                            possible_lcs.append(lcs(d.text, raw_header))
+    #print possible_lcs
     # the longest from all lcs -- perfect header
     max_length = max(len(s) for s in possible_lcs)
     for string in possible_lcs:
         if len(string) == max_length:
             result_header = string
     return result_header
+
+
+
+def long_substr(data):
+    substr = ''
+    if len(data) > 1 and len(data[0]) > 0:
+        for i in range(len(data[0])):
+            for j in range(len(data[0])-i+1):
+                if j > len(substr) and all(data[0][i:i+j] in x for x in data):
+                    substr = data[0][i:i+j]
+    words = substr.split()
+    if len(words) > 1 and capitalized(words[0]) and capitalized(words[1]):
+        return substr
+    return ''
+
+
+def author(article, authors):
+    """
+    Authors is a set of names found on many pages at once
+    used for filtering
+    """
+    candidates = Counter(find_author(article))
+    if len(candidates) > 1:  # maybe it's one of these sites where they have all contributors listed on every page
+        candidates -= Counter(authors)
+
+    # and at this point, if there are more than one in the set, we're in trouble
+    if len(candidates) > 1:
+
+        # sometimes we'll have authors listed multiple times, like "This Author" and "author: This Author"
+        # or "This Author" and "This Author today, 1:23"
+        # find the common substring and see if it helps
+
+        candidates = Counter([long_substr([a for a in candidates.iterkeys()])])
+
+        # # if not, oh well
+        # if len(candidates) > 1:
+        #     print candidates
+        #     raise Warning('More than one author found')
+
+    try:
+        return candidates.popitem()[0]
+    except KeyError:  # nothing found, too bad
+        return ''

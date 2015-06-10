@@ -17,19 +17,18 @@ import newspaper.utils.extract as extract
 import os
 import re
 
-# todo maybe replace all spiders with one and just provide a start url as an arg
 
 
 class TestSpider(CrawlSpider):
 
     # I sort of hope that the args are going to magically appear here, and that this is the way to call them...
-    def __init__(self, text=None, author=None, title=None, date=None, first=False, wordcount=10000, *args, **kwargs):
+    def __init__(self, text=None, authors=None, title=None, date=None, first=False, wordcount=10000, *args, **kwargs):
 
         super(TestSpider, self).__init__()
 
         # this is supposed to store xpaths
         self.text = text
-        self.author = author
+        self.authors = authors
         self.title = title
         self.date = date
 
@@ -44,7 +43,8 @@ class TestSpider(CrawlSpider):
         'rbc': 'РБК',
         'sovsport': 'Советский Спорт',  # ооох энкоды полетят
         'ria': 'РИА',
-        'izvestia': 'Известия'
+        'izvestia': 'Известия',
+        'newday': 'Новый День'
     }
     start_urls = []
 
@@ -59,16 +59,22 @@ class TestSpider(CrawlSpider):
             item['url'] = response.url
             item['source'] = self.names[self.name]
 
-            # call xpaths one by one and extract data
-            # todo add more fields after writing parsers
+            # call xpaths one by one and extract data based on test corpus
             if self.text:
                 item['text'] = extract.text(response, self.text)
+            try:
+                self.authors = [a.decode('utf-8') for a in self.authors.split(';')]
+            except AttributeError:  # it's already been split
+                pass
+            item['author'] = extract.author(response, self.authors)
 
+            # sometimes there is no author, but now it catches way more than it should
+            if not item['author']:
+                item['author'] = item['source']
+
+            # extract data from individual pages
             item['date'] = extract.date(response)
             item['title'] = extract.header(response)
-
-            # you think they'd be empty by default, but no
-            item['author'] = ''
 
         return item
 
@@ -171,13 +177,19 @@ class IzvestiaSpider(TestSpider):
     allowed_domains = ['izvestia.ru']
     start_urls = ['http://izvestia.ru']
 
-# fixme doesn't find any text or title in kp and records broken xml
-# fixme same shit with ria
 class KpSpider(TestSpider):
     name = 'kp'
     allowed_domains = ['kp.ru']
     start_urls = ['http://kp.ru']
 
+class NewDay(TestSpider):
+    name = 'newday'
+    allowed_domains = ['newdaynews.ru']
+    start_urls = ['http://newdaynews.ru']
+# fixme newday rejects connections or something?
+# fixme kp doesn't launch:
+#  sys.stdout.write('text=' + str(self.xpaths.most_common(1)[0][0]) + '\n')
+#         exceptions.IndexError: list index out of range
 xpaths = []
 
-# todo add new spider: http://newdaynews.ru/
+# todo test newdaynews

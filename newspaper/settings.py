@@ -14,8 +14,7 @@ BOT_NAME = 'newspaper'
 SPIDER_MODULES = ['newspaper.spiders']
 NEWSPIDER_MODULE = 'newspaper.spiders'
 
-# todo shut scrapy up in production, provide short progress messages
-LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'DEBUG'
 # LOG_FORMATTER = 'newspaper.spiders.PoliteLogFormatter'
 COOKIES_ENABLED = False
 
@@ -28,7 +27,7 @@ ITEM_PIPELINES = {
 # this will result in approx 50 pages, since crawls are async and do not stop immediately
 # CLOSESPIDER_PAGECOUNT = 42
 
-# this setting is for quick tests
+# this setting is for quick tests // defined in launcher.py now
 # CLOSESPIDER_PAGECOUNT = 2
 
 # this helps against 503s on some sites

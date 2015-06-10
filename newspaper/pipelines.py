@@ -55,9 +55,9 @@ class WritePipeline(object):
                     if exception.errno != errno.EEXIST:
                         raise
 
-            # todo create directory based on year and month. include subdir below into path. add existence check
 
             path = os.path.join(subdir, item['url'].strip('/').split('/')[-1])
+            print path
 
             # count words in article, save to item['wordcount']
             count = wordcount(item['text'])
@@ -70,7 +70,8 @@ class WritePipeline(object):
             #                                              # also, it won't work immediately, I wonder how slow
 
             with open(path, 'w') as f:
-                self.write_item(f, item)
+                if item['date'] and item['title'] and item['text']:
+                    self.write_item(f, item)
             raise DropItem
 
     def write_item(self, f, item):
@@ -81,7 +82,10 @@ class WritePipeline(object):
         f.write('<URL>{0}</URL>\n'.format(item['url']))
         f.write('<SOURCE>{0}</SOURCE>\n'.format(item['source']))
         f.write('<DATE>{0}</DATE>\n'.format(item['date']))
-        f.write('<AUTHOR>{0}</AUTHOR>\n'.format(item['author']))
+        try:
+            f.write('<AUTHOR>{0}</AUTHOR>\n'.format(item['author'].strip(' |').encode('utf-8')))
+        except UnicodeDecodeError:  # костыли и велосипеды
+            f.write('<AUTHOR>{0}</AUTHOR>\n'.format(item['author'].strip(' |')))
         f.write('<TITLE>{0}</TITLE>\n'.format(item['title'].encode('utf-8')))
         f.write('<WORDCOUNT>{0}</WORDCOUNT>\n'.format(item['wordcount']))
         f.write('</METATEXT>\n')
@@ -134,5 +138,12 @@ class DetectionPipeline(object):
 
     # this outputs the pipeline results
     def close_spider(self, spider):
+        # try:
+        #     sys.stdout.write('text=' + str(self.xpaths.most_common(1)[0][0]) + '\n')
+        # except IndexError:
+        #     print self.xpaths.most_common(1)
+        #     pass
+            # print self.xpaths.most_common(1)
+        # print self.authors
         sys.stdout.write('text=' + str(self.xpaths.most_common(1)[0][0]) + '\n')
-        sys.stdout.write('authors=' + ';'.join([i for i, count in self.authors.iteritems()]))
+        sys.stdout.write('authors=' + ';'.join([i for i, count in self.authors.iteritems() if count > 5]))
